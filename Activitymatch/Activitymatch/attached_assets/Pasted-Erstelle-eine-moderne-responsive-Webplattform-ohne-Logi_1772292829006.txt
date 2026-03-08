@@ -1,0 +1,71 @@
+Erstelle eine moderne, responsive Webplattform ohne Login-System, auf der Nutzer Anzeigen erstellen können, um andere Menschen für gemeinsame Aktivitäten in ihrer Stadt zu finden.
+
+Projektname: "ActivityMatch"
+
+Technische Anforderungen:
+- Frontend: HTML, CSS (modernes Design), JavaScript
+- Backend: Node.js mit Express
+- Datenspeicherung: einfache JSON-Datei oder SQLite
+- Keine Registrierung / kein Login
+- Mobile-optimiert
+- Klare, moderne UI (ähnlich Kleinanzeigen / Meetup minimalistisch)
+
+Funktionen:
+
+1. Startseite:
+- Übersicht aller Anzeigen
+- Filter nach:
+  - Stadt
+  - Kategorie
+  - Level (Anfänger, Amateur, Profi)
+- Suchfunktion (Freitext)
+- Button: "Anzeige erstellen"
+
+2. Anzeige erstellen (Formular mit Pflichtfeldern):
+Folgende Felder müssen Pflichtfelder sein:
+- Name (Textfeld)
+- Alter (Zahl)
+- Geschlecht (Dropdown: Männlich, Weiblich, Divers, Keine Angabe)
+- Stadt (Textfeld)
+- Kategorie (Dropdown: Sport, Gaming, Musik, Outdoor, Fitness, Sonstiges)
+- Aktivitätstitel (z.B. „Tennispartner gesucht“)
+- Beschreibung (Textarea)
+- Level (Dropdown: Anfänger, Amateur, Profi)
+- Wann? (Datum + optional Uhrzeit)
+- Kontaktmöglichkeit:
+    - Email
+    - Telefon
+    - WhatsApp
+- Checkbox: „Ich stimme zu, dass meine Angaben öffentlich angezeigt werden“
+
+3. Anzeige Detailseite:
+- Zeigt alle Informationen übersichtlich an
+- Kontaktinformationen sichtbar
+- Button: „Zurück zur Übersicht“
+
+4. Sicherheit:
+- Serverseitige Validierung aller Pflichtfelder
+- Einfache Spam-Schutzmaßnahme (z.B. Honeypot-Feld)
+- Maximale Zeichenlänge für Beschreibung (z.B. 500 Zeichen)
+
+5. Design:
+- Modernes Card-Layout
+- Jede Anzeige als Karte
+- Klare Call-to-Action Buttons
+- Sanfte Farben
+- Hover-Effekte
+- Schöne Schrift (Google Fonts)
+
+6. Bonus (optional):
+- Anzeigen werden automatisch nach Datum sortiert (neueste zuerst)
+- Löschen einer Anzeige über generierten Secret-Key (wird beim Erstellen erzeugt)
+- Einfache API-Route für Anzeigen
+
+Erstelle:
+- vollständigen funktionierenden Code
+- klare Ordnerstruktur
+- package.json
+- README mit Startanleitung
+
+Ziel:
+Eine einfache Plattform, die Menschen in derselben Stadt zusammenbringt, z.B. für Tennis, wenn jemand keinen Spielpartner hat.

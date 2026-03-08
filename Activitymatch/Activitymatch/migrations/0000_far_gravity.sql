@@ -1,0 +1,20 @@
+CREATE TABLE "listings" (
+	"id" serial PRIMARY KEY NOT NULL,
+	"name" text NOT NULL,
+	"age" integer NOT NULL,
+	"gender" text NOT NULL,
+	"city" text NOT NULL,
+	"category" text NOT NULL,
+	"title" text NOT NULL,
+	"description" text NOT NULL,
+	"level" text NOT NULL,
+	"activity_date" text,
+	"activity_time" text,
+	"recurrence" text DEFAULT 'Einmalig',
+	"match_preference" text,
+	"contact_email" text,
+	"contact_phone" text,
+	"contact_note" text,
+	"secret_key" text NOT NULL,
+	"created_at" timestamp DEFAULT now() NOT NULL
+);
