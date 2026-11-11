@@ -1,7 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { useState, useMemo } from "react";
 import { Link } from "wouter";
-import type { Listing } from "@shared/schema";
+import type { PublicListing } from "@shared/schema";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -88,7 +88,7 @@ function ListingCardSkeleton() {
   );
 }
 
-function ListingCard({ listing }: { listing: Listing }) {
+function ListingCard({ listing }: { listing: PublicListing }) {
   const CategoryIcon = categoryIcons[listing.category] || MoreHorizontal;
 
   return (
@@ -173,7 +173,7 @@ export default function Home() {
     return qs ? `?${qs}` : "";
   }, [cityFilter, categoryFilter, levelFilter, searchText]);
 
-  const { data: listings, isLoading } = useQuery<Listing[]>({
+  const { data: listings, isLoading } = useQuery<PublicListing[]>({
     queryKey: ["/api/listings" + queryParams],
   });
 

@@ -1,10 +1,17 @@
+import { startCleanup } from "./cleanup";
+import { migrateContactSchema } from "./migrate";
 import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
 import { serveStatic } from "./static";
 import { createServer } from "http";
-import { seedDatabase } from "./seed";
 
 const app = express();
+app.set("trust proxy", 1);
+app.disable("x-powered-by");
+app.use((_req, res, next) => {
+  res.setHeader("Referrer-Policy", "no-referrer");
+  next();
+});
 const httpServer = createServer(app);
 
 declare module "http" {
@@ -38,23 +45,11 @@ app.use((req, res, next) => {
   const start = Date.now();
   const path = req.path;
 
-  let capturedJsonResponse: Record<string, any> | undefined = undefined;
-
-  const originalResJson = res.json;
-  res.json = function (bodyJson, ...args) {
-    capturedJsonResponse = bodyJson;
-    return originalResJson.apply(res, [bodyJson, ...args]);
-  };
-
   res.on("finish", () => {
     const duration = Date.now() - start;
 
     if (path.startsWith("/api")) {
       let logLine = `${req.method} ${path} ${res.statusCode} in ${duration}ms`;
-
-      if (capturedJsonResponse) {
-        logLine += ` :: ${JSON.stringify(capturedJsonResponse)}`;
-      }
 
       log(logLine);
     }
@@ -64,23 +59,9 @@ app.use((req, res, next) => {
 });
 
 (async () => {
+  await migrateContactSchema();
+  startCleanup();
   await registerRoutes(httpServer, app);
-
-  // ✅ PRODUCTION → DB Schema automatisch erstellen
-  if (process.env.NODE_ENV === "production") {
-    console.log("Pushing database schema...");
-
-    const { execSync } = await import("child_process");
-
-    execSync("npx drizzle-kit push", {
-      stdio: "inherit",
-    });
-
-    console.log("Database schema ready");
-  } else {
-    // ✅ NUR LOKAL
-    await seedDatabase();
-  }
 
   app.use((err: any, _req: Request, res: Response, next: NextFunction) => {
     const status = err.status || err.statusCode || 500;
