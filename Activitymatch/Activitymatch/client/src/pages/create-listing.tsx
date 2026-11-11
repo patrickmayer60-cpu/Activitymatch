@@ -35,7 +35,7 @@ import {
   Check,
   Loader2,
 } from "lucide-react";
-import logoImage from "@assets/image_1772317603904.png";
+import { BrandLogo } from "@/components/brand-logo";
 
 const CATEGORIES = ["Sport", "Gaming", "Musik", "Outdoor", "Fitness", "Sonstiges"] as const;
 const GENDERS = ["Männlich", "Weiblich", "Divers", "Keine Angabe"] as const;
@@ -108,7 +108,7 @@ export default function CreateListing() {
         <div className="max-w-3xl mx-auto px-3 sm:px-4 py-3 sm:py-4">
           <div className="flex items-center justify-between gap-3">
             <Link href="/">
-              <img src={logoImage} alt="ActivityMatch" className="h-11 sm:h-14 object-contain cursor-pointer" data-testid="link-home" />
+              <BrandLogo className="h-11 sm:h-14 object-contain cursor-pointer" data-testid="link-home" />
             </Link>
             <Link href="/">
               <Button variant="outline" data-testid="button-back-overview">

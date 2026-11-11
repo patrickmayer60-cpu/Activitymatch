@@ -26,7 +26,7 @@ import {
   Eye,
   LogOut,
 } from "lucide-react";
-import logoImage from "@assets/image_1772317603904.png";
+import { BrandLogo } from "@/components/brand-logo";
 
 export default function Admin() {
   const [password, setPassword] = useState("");
@@ -104,7 +104,7 @@ export default function Admin() {
           <div className="max-w-3xl mx-auto px-3 sm:px-4 py-3 sm:py-4">
             <div className="flex items-center justify-between gap-3">
               <Link href="/">
-                <img src={logoImage} alt="ActivityMatch" className="h-11 sm:h-14 object-contain cursor-pointer" data-testid="link-home" />
+                <BrandLogo className="h-11 sm:h-14 object-contain cursor-pointer" data-testid="link-home" />
               </Link>
               <Link href="/">
                 <Button variant="outline" data-testid="button-back">
@@ -160,7 +160,7 @@ export default function Admin() {
         <div className="max-w-5xl mx-auto px-3 sm:px-4 py-3 sm:py-4">
           <div className="flex items-center justify-between gap-3">
             <Link href="/">
-              <img src={logoImage} alt="ActivityMatch" className="h-11 sm:h-14 object-contain cursor-pointer" data-testid="link-home" />
+              <BrandLogo className="h-11 sm:h-14 object-contain cursor-pointer" data-testid="link-home" />
             </Link>
             <div className="flex items-center gap-1.5 sm:gap-2">
               <Badge variant="secondary" className="no-default-active-elevate hidden sm:inline-flex">Admin</Badge>

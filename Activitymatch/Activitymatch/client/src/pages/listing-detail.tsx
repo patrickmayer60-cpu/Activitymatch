@@ -37,7 +37,7 @@ import {
   Loader2,
   Repeat,
 } from "lucide-react";
-import logoImage from "@assets/image_1772317603904.png";
+import { BrandLogo } from "@/components/brand-logo";
 
 const categoryIcons: Record<string, typeof Trophy> = {
   Sport: Trophy,
@@ -135,7 +135,7 @@ export default function ListingDetail() {
       <div className="min-h-screen bg-background">
         <header className="border-b border-border bg-card/50 backdrop-blur-sm sticky top-0 z-50">
           <div className="max-w-3xl mx-auto px-3 sm:px-4 py-3 sm:py-4">
-            <img src={logoImage} alt="ActivityMatch" className="h-11 sm:h-14 object-contain" />
+            <BrandLogo className="h-11 sm:h-14 object-contain" />
           </div>
         </header>
         <DetailSkeleton />
@@ -149,7 +149,7 @@ export default function ListingDetail() {
         <header className="border-b border-border bg-card/50 backdrop-blur-sm sticky top-0 z-50">
           <div className="max-w-3xl mx-auto px-3 sm:px-4 py-3 sm:py-4">
             <Link href="/">
-              <img src={logoImage} alt="ActivityMatch" className="h-11 sm:h-14 object-contain cursor-pointer" />
+              <BrandLogo className="h-11 sm:h-14 object-contain cursor-pointer" />
             </Link>
           </div>
         </header>
@@ -175,7 +175,7 @@ export default function ListingDetail() {
         <div className="max-w-3xl mx-auto px-3 sm:px-4 py-3 sm:py-4">
           <div className="flex items-center justify-between gap-3">
             <Link href="/">
-              <img src={logoImage} alt="ActivityMatch" className="h-11 sm:h-14 object-contain cursor-pointer" data-testid="link-home" />
+              <BrandLogo className="h-11 sm:h-14 object-contain cursor-pointer" data-testid="link-home" />
             </Link>
             <Link href="/">
               <Button variant="outline" data-testid="button-back-overview">

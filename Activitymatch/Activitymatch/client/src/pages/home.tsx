@@ -26,7 +26,7 @@ import {
   X,
   Repeat,
 } from "lucide-react";
-import logoImage from "@assets/image_1772317603904.png";
+import { BrandLogo } from "@/components/brand-logo";
 
 const CATEGORIES = ["Sport", "Gaming", "Musik", "Outdoor", "Fitness", "Sonstiges"] as const;
 const LEVELS = ["Anfänger", "Amateur", "Profi"] as const;
@@ -192,7 +192,7 @@ export default function Home() {
         <div className="max-w-6xl mx-auto px-3 sm:px-4 py-3 sm:py-4">
           <div className="flex items-center justify-between gap-3">
             <Link href="/">
-              <img src={logoImage} alt="ActivityMatch" className="h-11 sm:h-14 object-contain cursor-pointer" data-testid="link-home" />
+              <BrandLogo className="h-11 sm:h-14 object-contain cursor-pointer" data-testid="link-home" />
             </Link>
             <Link href="/create">
               <Button data-testid="button-create-listing">
