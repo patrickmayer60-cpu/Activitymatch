@@ -1,4 +1,4 @@
-import { pgTable, text, varchar, integer, timestamp, serial, boolean, jsonb } from "drizzle-orm/pg-core";
+import { pgTable, text, varchar, integer, timestamp, serial, boolean, jsonb, date } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
@@ -88,4 +88,14 @@ export const mailLimits = pgTable("mail_limits", {
   key: text("key").primaryKey(),
   count: integer("count").notNull(),
   expiresAt: timestamp("expires_at", {withTimezone: true}).notNull(),
+});
+
+export const platformDaily = pgTable("platform_daily", {
+  day: date("day").primaryKey(),
+  publishedCount: integer("published_count").notNull().default(0),
+  contactCount: integer("contact_count").notNull().default(0),
+});
+export const platformMetricsMeta = pgTable("platform_metrics_meta", {
+  id: integer("id").primaryKey(),
+  startedAt: timestamp("started_at", {withTimezone: true}).notNull().defaultNow(),
 });

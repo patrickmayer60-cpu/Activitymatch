@@ -103,6 +103,14 @@ export function registerContactRoutes(app: Express) {
         await sendMail({to:row.contact_email,replyTo:data.email,subject:`Neue Anfrage zu deiner ActivityMatch-Anzeige`,idempotencyKey:`forward-${action.token_hash}`,
           text:`Hallo ${row.name},\n\n${data.name} schreibt zu deiner Anzeige „${row.title}“:\n\n${data.message}\n\nAntwortadresse: ${data.email}\n\nDu kannst in deinem E-Mail-Programm auf Antworten klicken. Deine Antwort geht direkt an diese Person; dabei wird auch deine E-Mail-Adresse für sie sichtbar.\n\nAnzeige: ${baseUrl()}/listing/${row.id}\n\nUnerwünschte Anfragen? Über den privaten Verwaltungslink in deiner ursprünglichen Bestätigungs-E-Mail kannst du Anfragen deaktivieren oder die Anzeige löschen.\n\nActivityMatch`}, client);
       } else throw new PublicError(400,"Ungültiger Link.");
+      // Increment only after a successful action, in the same transaction as token consumption.
+      // No names, addresses, message bodies or listing identifiers in this aggregate table.
+      await client.query(`INSERT INTO platform_daily(day,published_count,contact_count)
+        VALUES((now() AT TIME ZONE 'Europe/Berlin')::date,$1,$2)
+        ON CONFLICT(day) DO UPDATE SET
+          published_count=platform_daily.published_count+excluded.published_count,
+          contact_count=platform_daily.contact_count+excluded.contact_count`,
+        [action.kind === "publish" ? 1 : 0, action.kind === "message" ? 1 : 0]);
       await client.query("UPDATE email_actions SET consumed_at=now(),payload='{}' WHERE token_hash=$1",[action.token_hash]);
       await client.query("COMMIT");
       res.json({message:action.kind === "publish" ? "Deine Anzeige ist jetzt veröffentlicht." : "Deine Nachricht wurde weitergeleitet.",listingId:row.id});

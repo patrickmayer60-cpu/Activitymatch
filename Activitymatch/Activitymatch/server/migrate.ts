@@ -28,6 +28,14 @@ export async function migrateContactSchema() {
     await client.query(`CREATE TABLE IF NOT EXISTS mail_limits (
       key text PRIMARY KEY, count integer NOT NULL, expires_at timestamptz NOT NULL
     )`);
+    await client.query(`CREATE TABLE IF NOT EXISTS platform_daily (
+      day date PRIMARY KEY, published_count integer NOT NULL DEFAULT 0,
+      contact_count integer NOT NULL DEFAULT 0
+    )`);
+    await client.query(`CREATE TABLE IF NOT EXISTS platform_metrics_meta (
+      id integer PRIMARY KEY CHECK(id=1), started_at timestamptz NOT NULL DEFAULT now()
+    )`);
+    await client.query("INSERT INTO platform_metrics_meta(id) VALUES(1) ON CONFLICT DO NOTHING");
     await client.query("COMMIT");
   } catch (error) {
     await client.query("ROLLBACK");

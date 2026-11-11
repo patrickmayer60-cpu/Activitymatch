@@ -1,3 +1,5 @@
+import { registerAdminDashboard } from "../server/admin-dashboard";
+import { requireAdmin } from "../server/routes";
 import assert from "node:assert/strict";
 import { PGlite } from "@electric-sql/pglite";
 import { pool } from "../server/db";
@@ -15,8 +17,11 @@ const adapter = async (config:any, params?:any[]) => {
 (pool as any).connect=async()=>({query:adapter,release(){}});
 const endpoints=new Map<string,any>();
 const app:any={};
-for(const verb of ['get','post','patch','delete']) app[verb]=(path:string,handler:any)=>endpoints.set(`${verb} ${path}`,handler);
+for(const verb of ['get','post','patch','delete']) app[verb]=(path:string,...handlers:any[])=>endpoints.set(`${verb} ${path}`,async(req:any,res:any)=>{
+  for(const handler of handlers){let next=false;await handler(req,res,()=>{next=true;});if(!next)break;}
+});
 registerContactRoutes(app);
+registerAdminDashboard(app,requireAdmin);
 const sent:any[]=[];
 process.env.APP_BASE_URL='https://activitymatch.example';
 process.env.RESEND_API_KEY='test-not-a-real-key';
@@ -27,9 +32,9 @@ globalThis.fetch=async(url:any,options:any)=>{
   sent.push(JSON.parse(options.body));
   return new Response(JSON.stringify({id:'simulated'}),{status:200});
 };
-async function call(verb:string,path:string,body:any={},params:any={},token?:string,ip='127.0.0.1') {
+async function call(verb:string,path:string,body:any={},params:any={},token?:string,ip='127.0.0.1',admin=false) {
   let status=200;let result:any;const headers:any={};
-  const req:any={body,params,query:{},ip,headers:token?{authorization:`Bearer ${token}`}:{}};
+  const req:any={body,params,query:verb==='get'?body:{},ip,session:{isAdmin:admin},headers:token?{authorization:`Bearer ${token}`}:{}};
   const res:any={setHeader(k:string,v:string){headers[k]=v;},status(value:number){status=value;return this;},json(value:any){result=value;return this;}};
   await endpoints.get(`${verb} ${path}`)(req,res,()=>{});
   return {status,body:result,headers};
@@ -86,8 +91,38 @@ try {
   globalThis.fetch=async()=>new Response('{}',{status:503});
   assert.equal((await call('post','/api/listings',{...listing,contactEmail:'new@example.com'}, {},undefined,'127.0.0.3')).status,503);
   assert.equal((await postgres.query('SELECT count(*)::int AS n FROM listings')).rows[0].n,1);
+  for(const route of ['/api/admin/dashboard','/api/admin/listings','/api/admin/contacts']) {
+    assert.equal((await call('get',route)).status,401,'private API must reject unsigned requests');
+  }
+  const adminCall=(path:string,query:any={})=>call('get',path,query,{},undefined,'127.0.0.9',true);
+  const summary=await adminCall('/api/admin/dashboard');
+  assert.equal(summary.status,200);
+  assert.equal(summary.body.published,1);
+  assert.equal(summary.body.confirmedAddresses,1);
+  assert.equal(summary.body.publications30,1);
+  assert.equal(summary.body.contacts30,1,'duplicate/expired/failed requests must not inflate metrics');
+  assert.equal(summary.body.daily.length,30);
+  const contactList=await adminCall('/api/admin/contacts');
+  assert.equal(contactList.body.total,1);
+  assert.equal(contactList.body.items[0].email,listing.contactEmail);
+  const privateRows=await adminCall('/api/admin/listings');
+  assert.equal(privateRows.body.items[0].contactEmail,listing.contactEmail);
+  assert.equal(privateRows.body.items[0].secretKey,undefined);
+  assert.equal(privateRows.body.items[0].manageHash,undefined);
+  assert.equal((await adminCall('/api/admin/listings',{page:'bad'})).status,400);
+  assert.equal((await adminCall('/api/admin/contacts',{search:'does-not-exist'})).body.total,0);
+  await postgres.query("INSERT INTO listings(name,age,gender,city,category,title,description,level,contact_email,secret_key,email_verified) VALUES('Neu',40,'Keine Angabe','Berlin','Sport','Weitere Anzeige','Vorhandene Beschreibung','Amateur','PATRICK@example.com','duplicate',true)");
+  const duplicate=await adminCall('/api/admin/contacts');
+  assert.equal(duplicate.body.total,1);
+  assert.equal(duplicate.body.items[0].listingCount,2);
+  assert.equal(duplicate.body.items[0].name,'Neu');
+  await postgres.query("DELETE FROM listings WHERE secret_key='duplicate'");
   assert.equal((await call('delete','/api/manage/:id',{}, {id:'1'},manage)).status,200);
   assert.deepEqual((await call('get','/api/listings')).body,[]);
+  assert.equal((await adminCall('/api/admin/contacts')).body.total,0,'last listing removal must remove contact');
+  const retained=(await adminCall('/api/admin/dashboard')).body;
+  assert.equal(retained.publications30,1,'aggregate history survives deletion');
+  assert.equal(retained.contacts30,1);
   assert.equal((await call('post','/api/email-actions/confirm',{token})).status,410);
   // Existing data remains visible, but old unverified addresses cannot receive requests.
   await postgres.query("INSERT INTO listings(name,age,gender,city,category,title,description,level,contact_email,secret_key) VALUES('Alt',30,'Keine Angabe','Berlin','Sport','Alte Anzeige','Vorhandene Beschreibung','Amateur','old@example.com','legacy-key')");

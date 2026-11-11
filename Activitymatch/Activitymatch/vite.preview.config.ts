@@ -58,7 +58,25 @@ function previewApi(): Plugin {
           const row=examples.find(row=>row.id===Number(match[1]));
           return row?send(200,row):send(404,{message:"Beispielanzeige nicht gefunden."});
         }
-        if(url.pathname === "/api/admin/session") return send(200,{authenticated:false});
+        if(url.pathname === "/api/admin/session") return send(200,{authenticated:true});
+        if(url.pathname === "/api/admin/dashboard") return send(200,{
+          stored:examples.length,published:examples.length,pending:0,confirmedAddresses:examples.length,
+          publications30:examples.length,contacts30:0,trackingSince:new Date().toISOString(),
+          categories:[...new Set(examples.map(row=>row.category))].map(label=>({label,count:examples.filter(row=>row.category===label).length})),
+          cities:[...new Set(examples.map(row=>row.city))].map(label=>({label,count:examples.filter(row=>row.city===label).length})),
+          daily:[{day:upcomingDate(0),publications:examples.length,contacts:0}],
+        });
+        if(url.pathname === "/api/admin/listings" || url.pathname === "/api/admin/contacts") {
+          const contacts=url.pathname.endsWith("contacts");
+          const value=(url.searchParams.get("search")||"").toLowerCase();
+          const page=Math.max(1,Number(url.searchParams.get("page"))||1);
+          const items=examples.map((row,index)=>contacts?{
+            email:`beispiel${index+1}@example.com`,name:row.name,age:row.age,city:row.city,
+            listingCount:1,firstCreated:row.createdAt,lastCreated:row.createdAt,
+          }:{...row,contactEmail:`beispiel${index+1}@example.com`,emailVerified:true,published:true});
+          const filtered=items.filter(row=>JSON.stringify(row).toLowerCase().includes(value));
+          return send(200,{items:filtered.slice((page-1)*25,page*25),total:filtered.length,page,pageSize:25});
+        }
         return send(404,{message:"Diese Funktion gehört nicht zur lokalen Designvorschau."});
       });
     },
