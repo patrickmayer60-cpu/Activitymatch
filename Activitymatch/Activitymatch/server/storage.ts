@@ -23,7 +23,7 @@ export class DatabaseStorage implements IStorage {
     level?: string;
     search?: string;
   }): Promise<Listing[]> {
-    const conditions: SQL[] = [];
+    const conditions: SQL[] = [eq(listings.published, true)];
 
     if (filters?.city) {
       conditions.push(ilike(listings.city, `%${filters.city}%`));

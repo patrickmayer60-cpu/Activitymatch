@@ -44,12 +44,7 @@ const LEVELS = ["Anfänger", "Amateur", "Profi"] as const;
 export default function CreateListing() {
   const [, navigate] = useLocation();
   const { toast } = useToast();
-  const [secretKeyDialog, setSecretKeyDialog] = useState<{ open: boolean; key: string; id: number }>({
-    open: false,
-    key: "",
-    id: 0,
-  });
-  const [copied, setCopied] = useState(false);
+  const [confirmationMessage, setConfirmationMessage] = useState("");
   const [flexibleDate, setFlexibleDate] = useState(false);
 
   const form = useForm<InsertListing>({
@@ -78,13 +73,12 @@ export default function CreateListing() {
     mutationFn: async (data: InsertListing) => {
       const res = await apiRequest("POST", "/api/listings", {
         ...data,
-        website: undefined,
+        website: (document.querySelector('input[name="website"]') as HTMLInputElement)?.value || "",
       });
       return res.json();
     },
     onSuccess: (result) => {
-      queryClient.invalidateQueries({ queryKey: ["/api/listings"] });
-      setSecretKeyDialog({ open: true, key: result.secretKey, id: result.listing.id });
+      setConfirmationMessage(result.message);
     },
     onError: (error: Error) => {
       toast({
@@ -104,12 +98,6 @@ export default function CreateListing() {
       return;
     }
     createMutation.mutate(data);
-  };
-
-  const copyKey = () => {
-    navigator.clipboard.writeText(secretKeyDialog.key);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
   };
 
   const descriptionLength = form.watch("description")?.length || 0;
@@ -141,90 +129,6 @@ export default function CreateListing() {
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
             <input type="text" name="website" style={{ display: "none" }} tabIndex={-1} autoComplete="off" />
-
-            <Card className="border border-border">
-              <CardHeader className="pb-4">
-                <CardTitle className="text-base">Persönliche Angaben</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <FormField
-                    control={form.control}
-                    name="name"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Name *</FormLabel>
-                        <FormControl>
-                          <Input placeholder="Dein Name" {...field} data-testid="input-name" />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={form.control}
-                    name="age"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Alter *</FormLabel>
-                        <FormControl>
-                          <Input
-                            type="number"
-                            placeholder="Dein Alter"
-                            {...field}
-                            onChange={(e) => field.onChange(e.target.value ? parseInt(e.target.value) : undefined)}
-                            value={field.value || ""}
-                            data-testid="input-age"
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                </div>
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <FormField
-                    control={form.control}
-                    name="gender"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Geschlecht *</FormLabel>
-                        <Select onValueChange={field.onChange} value={field.value || ""}>
-                          <FormControl>
-                            <SelectTrigger data-testid="select-gender">
-                              <SelectValue placeholder="Auswählen" />
-                            </SelectTrigger>
-                          </FormControl>
-                          <SelectContent>
-                            {GENDERS.map((g) => (
-                              <SelectItem key={g} value={g}>{g}</SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={form.control}
-                    name="city"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Stadt *</FormLabel>
-                        <CityCombobox
-                          value={field.value}
-                          onChange={field.onChange}
-                          placeholder="Stadt auswählen..."
-                          data-testid="input-city"
-                        />
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                </div>
-              </CardContent>
-            </Card>
 
             <Card className="border border-border">
               <CardHeader className="pb-4">
@@ -421,13 +325,92 @@ export default function CreateListing() {
 
             <Card className="border border-border">
               <CardHeader className="pb-4">
+                <CardTitle className="text-base">Persönliche Angaben</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <FormField
+                    control={form.control}
+                    name="name"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Vorname *</FormLabel>
+                        <FormControl>
+                          <Input placeholder="Dein Vorname" {...field} data-testid="input-name" />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="age"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Alter *</FormLabel>
+                        <FormControl>
+                          <Input
+                            type="number"
+                            placeholder="Dein Alter"
+                            {...field}
+                            onChange={(e) => field.onChange(e.target.value ? parseInt(e.target.value) : undefined)}
+                            value={field.value || ""}
+                            data-testid="input-age"
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <FormField
+                    control={form.control}
+                    name="gender"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Geschlecht *</FormLabel>
+                        <Select onValueChange={field.onChange} value={field.value || ""}>
+                          <FormControl>
+                            <SelectTrigger data-testid="select-gender">
+                              <SelectValue placeholder="Auswählen" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            {GENDERS.map((g) => (
+                              <SelectItem key={g} value={g}>{g}</SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="city"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Stadt *</FormLabel>
+                        <CityCombobox
+                          value={field.value}
+                          onChange={field.onChange}
+                          placeholder="Stadt auswählen..."
+                          data-testid="input-city"
+                        />
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card className="border border-border">
+              <CardHeader className="pb-4">
                 <CardTitle className="text-base">Kontaktmöglichkeiten</CardTitle>
-                <FormDescription>Mindestens eine Kontaktmöglichkeit angeben</FormDescription>
-                {form.formState.errors.contactEmail?.message === "Mindestens eine Kontaktmöglichkeit ist erforderlich" && (
-                  <p className="text-sm text-destructive mt-1" data-testid="text-contact-error">
-                    Mindestens eine Kontaktmöglichkeit ist erforderlich
-                  </p>
-                )}
+                <FormDescription>Deine E-Mail-Adresse bleibt privat. Interessenten schreiben dir über ein Kontaktformular.</FormDescription>
               </CardHeader>
               <CardContent className="space-y-4">
                 <FormField
@@ -435,7 +418,7 @@ export default function CreateListing() {
                   name="contactEmail"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>E-Mail</FormLabel>
+                      <FormLabel>E-Mail-Adresse (privat) *</FormLabel>
                       <FormControl>
                         <Input type="email" placeholder="deine@email.de" {...field} value={field.value || ""} data-testid="input-email" />
                       </FormControl>
@@ -447,33 +430,20 @@ export default function CreateListing() {
                 />
                 <FormField
                   control={form.control}
-                  name="contactPhone"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Telefon</FormLabel>
-                      <FormControl>
-                        <Input type="tel" placeholder="+49 123 456789" {...field} value={field.value || ""} data-testid="input-phone" />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
                   name="contactNote"
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Kontakthinweis (optional)</FormLabel>
                       <FormControl>
                         <Input
-                          placeholder='z.B. "Anfrage über WhatsApp möglich"'
+                          placeholder='z.B. "Ich antworte meistens abends"'
                           maxLength={200}
                           {...field}
                           value={field.value || ""}
                           data-testid="input-contact-note"
                         />
                       </FormControl>
-                      <FormDescription>Zusätzliche Hinweise zur Kontaktaufnahme</FormDescription>
+                      <FormDescription>Öffentlich sichtbar. Bitte keine Telefonnummer oder E-Mail-Adresse eintragen.</FormDescription>
                       <FormMessage />
                     </FormItem>
                   )}
@@ -495,7 +465,7 @@ export default function CreateListing() {
                   </FormControl>
                   <div className="space-y-1 leading-none">
                     <FormLabel className="text-sm font-normal">
-                      Ich stimme zu, dass meine Angaben öffentlich angezeigt werden *
+                      Ich stimme zu, dass meine Anzeige und persönlichen Angaben öffentlich angezeigt werden. Meine E-Mail-Adresse bleibt privat und wird für Bestätigung und Kontaktanfragen verwendet. *
                     </FormLabel>
                     <FormMessage />
                   </div>
@@ -516,47 +486,20 @@ export default function CreateListing() {
                   Wird erstellt...
                 </>
               ) : (
-                "Anzeige veröffentlichen"
+                "Bestätigungslink anfordern"
               )}
             </Button>
           </form>
         </Form>
       </div>
 
-      <Dialog open={secretKeyDialog.open} onOpenChange={(open) => {
-        if (!open) {
-          navigate(`/listing/${secretKeyDialog.id}`);
-        }
-        setSecretKeyDialog((prev) => ({ ...prev, open }));
-      }}>
+      <Dialog open={!!confirmationMessage} onOpenChange={(open) => { if (!open) navigate("/"); }}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Anzeige erfolgreich erstellt!</DialogTitle>
-            <DialogDescription>
-              Speichere diesen Secret-Key, um deine Anzeige später löschen zu können.
-              Dieser Key wird nur einmal angezeigt!
-            </DialogDescription>
+            <DialogTitle>Bitte prüfe dein E-Mail-Postfach</DialogTitle>
+            <DialogDescription>{confirmationMessage} Bitte prüfe auch den Spamordner. In der E-Mail findest du außerdem deinen privaten Verwaltungslink.</DialogDescription>
           </DialogHeader>
-          <div className="space-y-4">
-            <div className="flex items-center gap-2">
-              <code className="flex-1 bg-muted px-3 py-2 rounded-md text-sm font-mono break-all" data-testid="text-secret-key">
-                {secretKeyDialog.key}
-              </code>
-              <Button size="icon" variant="outline" onClick={copyKey} data-testid="button-copy-key">
-                {copied ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
-              </Button>
-            </div>
-            <Button
-              className="w-full"
-              onClick={() => {
-                setSecretKeyDialog((prev) => ({ ...prev, open: false }));
-                navigate(`/listing/${secretKeyDialog.id}`);
-              }}
-              data-testid="button-view-listing"
-            >
-              Anzeige ansehen
-            </Button>
-          </div>
+          <Button onClick={() => navigate("/")}>Zur Übersicht</Button>
         </DialogContent>
       </Dialog>
     </div>

@@ -1,7 +1,8 @@
+import { ContactForm } from "@/components/contact-form";
 import { useState } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { useRoute, Link, useLocation } from "wouter";
-import type { Listing } from "@shared/schema";
+import type { PublicListing } from "@shared/schema";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { Card, CardContent } from "@/components/ui/card";
@@ -106,7 +107,7 @@ export default function ListingDetail() {
 
   const id = params?.id ? parseInt(params.id) : 0;
 
-  const { data: listing, isLoading, error } = useQuery<Omit<Listing, "secretKey">>({
+  const { data: listing, isLoading, error } = useQuery<PublicListing>({
     queryKey: ["/api/listings", id],
     enabled: id > 0,
   });
@@ -282,30 +283,7 @@ export default function ListingDetail() {
           <CardContent className="p-4 sm:p-5">
             <h3 className="font-semibold mb-3">Kontakt</h3>
             <div className="space-y-3">
-              {listing.contactEmail && (
-                <a
-                  href={`mailto:${listing.contactEmail}`}
-                  className="flex items-center gap-3 text-sm hover-elevate rounded-md p-2 -mx-2 transition-colors"
-                  data-testid="link-email"
-                >
-                  <div className="w-8 h-8 rounded-md bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center">
-                    <Mail className="w-4 h-4 text-blue-600 dark:text-blue-400" />
-                  </div>
-                  <span>{listing.contactEmail}</span>
-                </a>
-              )}
-              {listing.contactPhone && (
-                <a
-                  href={`tel:${listing.contactPhone}`}
-                  className="flex items-center gap-3 text-sm hover-elevate rounded-md p-2 -mx-2 transition-colors"
-                  data-testid="link-phone"
-                >
-                  <div className="w-8 h-8 rounded-md bg-lime-100 dark:bg-lime-900/30 flex items-center justify-center">
-                    <Phone className="w-4 h-4 text-lime-700 dark:text-lime-400" />
-                  </div>
-                  <span>{listing.contactPhone}</span>
-                </a>
-              )}
+              <ContactForm listingId={listing.id} canContact={listing.canContact} />
               {listing.contactNote && (
                 <div className="flex items-center gap-3 text-sm rounded-md p-2 -mx-2" data-testid="text-contact-note">
                   <div className="w-8 h-8 rounded-md bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center">

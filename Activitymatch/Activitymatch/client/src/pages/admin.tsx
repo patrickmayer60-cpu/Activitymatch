@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { Link } from "wouter";
-import type { Listing } from "@shared/schema";
+import type { PublicListing } from "@shared/schema";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -39,7 +39,7 @@ export default function Admin() {
 
   const authenticated = sessionQuery.data?.authenticated ?? false;
 
-  const { data: listings, isLoading } = useQuery<Listing[]>({
+  const { data: listings, isLoading } = useQuery<PublicListing[]>({
     queryKey: ["/api/listings"],
     enabled: authenticated,
   });

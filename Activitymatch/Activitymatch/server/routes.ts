@@ -1,10 +1,9 @@
+import { randomBytes } from "node:crypto";
+import { registerContactRoutes } from "./contact";
 import type { Express, Request, Response, NextFunction } from "express";
-import { createServer, type Server } from "http";
+import { type Server } from "http";
 import session from "express-session";
 import { storage } from "./storage";
-import { insertListingSchema } from "@shared/schema";
-import { ZodError } from "zod";
-import { fromZodError } from "zod-validation-error";
 
 declare module "express-session" {
   interface SessionData {
@@ -25,71 +24,19 @@ export async function registerRoutes(
 ): Promise<Server> {
   app.use(
     session({
-      secret: process.env.SESSION_SECRET || "fallback-secret",
+      secret: process.env.SESSION_SECRET || randomBytes(32).toString("hex"),
       resave: false,
       saveUninitialized: false,
       cookie: {
         httpOnly: true,
-        secure: false,
+        secure: process.env.NODE_ENV === "production",
+        sameSite: "lax",
         maxAge: 1000 * 60 * 60 * 2,
       },
     })
   );
 
-  app.get("/api/listings", async (req, res) => {
-    try {
-      const { city, category, level, search } = req.query;
-      const listings = await storage.getListings({
-        city: city as string | undefined,
-        category: category as string | undefined,
-        level: level as string | undefined,
-        search: search as string | undefined,
-      });
-      const publicListings = listings.map(({ secretKey, ...rest }) => rest);
-      res.json(publicListings);
-    } catch (error) {
-      res.status(500).json({ message: "Fehler beim Laden der Anzeigen" });
-    }
-  });
-
-  app.get("/api/listings/:id", async (req, res) => {
-    try {
-      const id = parseInt(req.params.id);
-      if (isNaN(id)) {
-        return res.status(400).json({ message: "Ungültige ID" });
-      }
-      const listing = await storage.getListing(id);
-      if (!listing) {
-        return res.status(404).json({ message: "Anzeige nicht gefunden" });
-      }
-      const { secretKey, ...publicListing } = listing;
-      res.json(publicListing);
-    } catch (error) {
-      res.status(500).json({ message: "Fehler beim Laden der Anzeige" });
-    }
-  });
-
-  app.post("/api/listings", async (req, res) => {
-    try {
-      if (req.body.website) {
-        return res.status(400).json({ message: "Spam erkannt" });
-      }
-
-      const parsed = insertListingSchema.parse(req.body);
-      const { consent, ...listingData } = parsed;
-      const result = await storage.createListing(listingData);
-      res.status(201).json({
-        listing: result.listing,
-        secretKey: result.secretKey,
-      });
-    } catch (error) {
-      if (error instanceof ZodError) {
-        const validationError = fromZodError(error);
-        return res.status(400).json({ message: validationError.message });
-      }
-      res.status(500).json({ message: "Fehler beim Erstellen der Anzeige" });
-    }
-  });
+  registerContactRoutes(app);
 
   app.post("/api/admin/login", async (req, res) => {
     try {
@@ -116,7 +63,7 @@ export async function registerRoutes(
 
   app.delete("/api/admin/listings/:id", requireAdmin, async (req, res) => {
     try {
-      const id = parseInt(req.params.id);
+      const id = parseInt(String(req.params.id));
       if (isNaN(id)) {
         return res.status(400).json({ message: "Ungültige ID" });
       }
@@ -132,7 +79,7 @@ export async function registerRoutes(
 
   app.delete("/api/listings/:id", async (req, res) => {
     try {
-      const id = parseInt(req.params.id);
+      const id = parseInt(String(req.params.id));
       const { secretKey } = req.body;
       if (isNaN(id) || !secretKey) {
         return res.status(400).json({ message: "Ungültige Anfrage" });
