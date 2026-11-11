@@ -1,3 +1,4 @@
+import { publishEmail, requestEmail, forwardEmail } from "./email-text";
 import type { Express, Request, Response, NextFunction } from "express";
 import { z, ZodError } from "zod";
 import { db, pool } from "./db";
@@ -56,8 +57,11 @@ export function registerContactRoutes(app: Express) {
     }).returning();
     try {
       await pool.query(`INSERT INTO email_actions(token_hash,kind,listing_id,expires_at) VALUES($1,'publish',$2,now()+interval '24 hours')`,[hashToken(confirmToken),row.id]);
-      await sendMail({to:data.contactEmail,subject:"Bitte bestätige deine ActivityMatch-Anzeige", idempotencyKey:`publish-${hashToken(confirmToken)}`,
-        text:`Hallo ${data.name},\n\nbitte öffne diesen Link und bestätige dort deine Anzeige „${data.title}“ (24 Stunden gültig):\n${baseUrl()}/email-action#${confirmToken}\n\nDein privater Verwaltungslink zum Bearbeiten, Pausieren von Anfragen und Löschen:\n${baseUrl()}/manage/${row.id}#${manageToken}\n\nBewahre diese E-Mail auf und teile den Verwaltungslink nicht. Wenn du die Anzeige nicht erstellt hast, ignoriere diese E-Mail. Die Anzeige wird dann nicht veröffentlicht.\n\nActivityMatch`});
+      await sendMail({to:data.contactEmail,idempotencyKey:`publish-${hashToken(confirmToken)}`,
+        ...publishEmail({language:data.language,name:data.name,title:data.title,
+          confirmUrl:`${baseUrl()}/email-action?lang=${data.language}#${confirmToken}`,
+          manageUrl:`${baseUrl()}/manage/${row.id}?lang=${data.language}#${manageToken}`,
+        })});
     } catch(error) {
       // If delivery timed out, the provider may still deliver; the now-invalid link cannot publish anything.
       await db.delete(listings).where(eq(listings.id,row.id)); throw error;
@@ -76,8 +80,10 @@ export function registerContactRoutes(app: Express) {
     const tokenHash = hashToken(token);
     await pool.query(`INSERT INTO email_actions(token_hash,kind,listing_id,payload,expires_at) VALUES($1,'message',$2,$3,now()+interval '1 hour')`,[tokenHash,row.id,JSON.stringify({name:data.name,email:data.email,message:data.message})]);
     try {
-      await sendMail({to:data.email,subject:"Bestätige deine Anfrage bei ActivityMatch",idempotencyKey:`request-${tokenHash}`,
-        text:`Hallo ${data.name},\n\nbitte öffne diesen Link und bestätige dort deine Anfrage zur Anzeige „${row.title}“ (1 Stunde gültig):\n${baseUrl()}/email-action#${token}\n\nErst danach werden dein Vorname, deine Nachricht und deine E-Mail-Adresse an den Ersteller übermittelt. Wenn du keine Anfrage gestellt hast, ignoriere diese E-Mail.\n\nActivityMatch`});
+      await sendMail({to:data.email,idempotencyKey:`request-${tokenHash}`,
+        ...requestEmail({language:data.language,name:data.name,title:row.title,
+          url:`${baseUrl()}/email-action?lang=${data.language}#${token}`,
+        })});
     } catch(error) { await pool.query("DELETE FROM email_actions WHERE token_hash=$1",[tokenHash]); throw error; }
     res.status(202).json({message:"Bitte bestätige deine Anfrage über den Link in deinem E-Mail-Postfach. Erst danach wird sie weitergeleitet."});
   }));
@@ -100,8 +106,10 @@ export function registerContactRoutes(app: Express) {
       } else if(action.kind === "message") {
         if(!row.published || !row.email_verified || !row.contact_enabled || !row.contact_email) throw new PublicError(409,"Die Anzeige nimmt keine Anfragen mehr an.");
         const data = contactSchema.omit({consent:true,website:true}).parse(action.payload);
-        await sendMail({to:row.contact_email,replyTo:data.email,subject:`Neue Anfrage zu deiner ActivityMatch-Anzeige`,idempotencyKey:`forward-${action.token_hash}`,
-          text:`Hallo ${row.name},\n\n${data.name} schreibt zu deiner Anzeige „${row.title}“:\n\n${data.message}\n\nAntwortadresse: ${data.email}\n\nDu kannst in deinem E-Mail-Programm auf Antworten klicken. Deine Antwort geht direkt an diese Person; dabei wird auch deine E-Mail-Adresse für sie sichtbar.\n\nAnzeige: ${baseUrl()}/listing/${row.id}\n\nUnerwünschte Anfragen? Über den privaten Verwaltungslink in deiner ursprünglichen Bestätigungs-E-Mail kannst du Anfragen deaktivieren oder die Anzeige löschen.\n\nActivityMatch`}, client);
+        await sendMail({to:row.contact_email,replyTo:data.email,idempotencyKey:`forward-${action.token_hash}`,
+          ...forwardEmail({language:row.language,owner:row.name,name:data.name,title:row.title,
+            message:data.message,email:data.email,url:`${baseUrl()}/listing/${row.id}`,
+          })},client);
       } else throw new PublicError(400,"Ungültiger Link.");
       // Increment only after a successful action, in the same transaction as token consumption.
       // No names, addresses, message bodies or listing identifiers in this aggregate table.

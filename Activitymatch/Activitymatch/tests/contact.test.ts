@@ -27,11 +27,12 @@ process.env.APP_BASE_URL='https://activitymatch.example';
 process.env.RESEND_API_KEY='test-not-a-real-key';
 process.env.EMAIL_FROM='ActivityMatch <test@mail.activitymatch.example>';
 const originalFetch=globalThis.fetch;
-globalThis.fetch=async(url:any,options:any)=>{
+const simulatedFetch:typeof fetch=async(url:any,options:any)=>{
   assert.equal(url,'https://api.resend.com/emails');
   sent.push(JSON.parse(options.body));
   return new Response(JSON.stringify({id:'simulated'}),{status:200});
 };
+globalThis.fetch=simulatedFetch;
 async function call(verb:string,path:string,body:any={},params:any={},token?:string,ip='127.0.0.1',admin=false) {
   let status=200;let result:any;const headers:any={};
   const req:any={body,params,query:verb==='get'?body:{},ip,session:{isAdmin:admin},headers:token?{authorization:`Bearer ${token}`}:{}};
@@ -39,12 +40,12 @@ async function call(verb:string,path:string,body:any={},params:any={},token?:str
   await endpoints.get(`${verb} ${path}`)(req,res,()=>{});
   return {status,body:result,headers};
 }
-const tokenFrom=(mail:any,path:string)=>mail.text.match(new RegExp(path+'#([a-f0-9]{64})'))?.[1];
+const tokenFrom=(mail:any,path:string)=>mail.text.match(new RegExp(path+'(?:\\?lang=(?:de|en))?#([a-f0-9]{64})'))?.[1];
 try {
   await migrateContactSchema();
   await migrateContactSchema();
   assert.equal(endpoints.has('get /api/email-actions/confirm'),false,'GET must not consume links');
-  const listing={name:'Patrick',age:37,gender:'Keine Angabe',city:'Ingolstadt',category:'Sport',title:'Rennradrunde am Samstag',description:'Gemeinsam eine lockere Runde fahren.',level:'Amateur',activityDate:'2026-12-01',activityTime:'10:00',contactEmail:'patrick@example.com',contactPhone:'',consent:true};
+  const listing={name:'Patrick',age:37,gender:'Keine Angabe',city:'Ingolstadt',category:'Rennrad',title:'Rennradrunde am Samstag',description:'Gemeinsam eine lockere Runde fahren.',level:'Amateur',activityDate:'2026-12-01',activityTime:'10:00',contactEmail:'patrick@example.com',contactPhone:'',consent:true};
   const create=await call('post','/api/listings',listing);
   assert.equal(create.status,202);assert.equal(sent.length,1);
   assert.equal(create.body.secretKey,undefined);
@@ -130,6 +131,26 @@ try {
   await postgres.query("INSERT INTO listings(name,age,gender,city,category,title,description,level,secret_key,published,created_at) VALUES('Test',30,'Keine Angabe','Berlin','Sport','Abgelaufene Anzeige','Vorhandene Beschreibung','Amateur','temporary',false,now()-interval '2 days')");
   await cleanupExpiredData();
   assert.equal((await postgres.query('SELECT count(*)::int AS n FROM listings')).rows[0].n,1);
+  // English creator and sender: canonical category, localized links and emails.
+  globalThis.fetch=simulatedFetch;
+  const englishListing={...listing,language:'en',category:'Laufen',contactEmail:'english@example.com'};
+  assert.equal((await call('post','/api/listings',englishListing,{},undefined,'127.0.0.20')).status,202);
+  assert.match(sent.at(-1).subject,/Please confirm/);
+  assert.ok(sent.at(-1).text.includes('?lang=en#'));
+  const englishToken=tokenFrom(sent.at(-1),'/email-action');
+  assert.ok(englishToken);
+  const englishConfirmed=await call('post','/api/email-actions/confirm',{token:englishToken},{},undefined,'127.0.0.20');
+  assert.equal(englishConfirmed.status,200);
+  const englishId=String(englishConfirmed.body.listingId);
+  assert.equal((await call('get','/api/listings',{category:'Laufen'})).body.length,1);
+  assert.equal((await call('post','/api/listings/:id/contact',{...data,language:'en',email:'sender-en@example.com'},{id:englishId},undefined,'127.0.0.21')).status,202);
+  assert.match(sent.at(-1).subject,/Confirm your/);
+  const enContactToken=tokenFrom(sent.at(-1),'/email-action');
+  assert.equal((await call('post','/api/email-actions/confirm',{token:enContactToken},{},undefined,'127.0.0.21')).status,200);
+  assert.match(sent.at(-1).subject,/New enquiry/);
+  assert.equal(sent.at(-1).reply_to,'sender-en@example.com');
+  const languageStats=(await adminCall('/api/admin/dashboard')).body;
+  assert.ok(languageStats.categories.some((c:any)=>c.label==='Laufen'&&c.count===1));
   console.log('PASS: migrations, private public API, hidden pending listing, confirmation, duplicate prevention, reply-to, validation, management authorization, edits, contact pause, expiry, rate limit, provider failure and cascade deletion. No real emails sent.');
 } finally {
   globalThis.fetch=originalFetch;

@@ -1,3 +1,5 @@
+import { t, locale } from "@/lib/i18n";
+import { CATEGORIES, SPORT_CATEGORIES } from "@shared/categories";
 import { useQuery } from "@tanstack/react-query";
 import { useState, useMemo } from "react";
 import { Link } from "wouter";
@@ -28,7 +30,7 @@ import {
 } from "lucide-react";
 import { BrandLogo } from "@/components/brand-logo";
 
-const CATEGORIES = ["Sport", "Gaming", "Musik", "Outdoor", "Fitness", "Sonstiges"] as const;
+
 const LEVELS = ["Anfänger", "Amateur", "Profi"] as const;
 
 const categoryIcons: Record<string, typeof Trophy> = {
@@ -58,7 +60,7 @@ const levelColors: Record<string, string> = {
 function formatDate(dateStr: string) {
   try {
     const date = new Date(dateStr);
-    return date.toLocaleDateString("de-DE", {
+    return date.toLocaleDateString(locale(), {
       day: "2-digit",
       month: "long",
       year: "numeric",
@@ -89,7 +91,7 @@ function ListingCardSkeleton() {
 }
 
 function ListingCard({ listing }: { listing: PublicListing }) {
-  const CategoryIcon = categoryIcons[listing.category] || MoreHorizontal;
+  const CategoryIcon = categoryIcons[listing.category] || (SPORT_CATEGORIES.includes(listing.category) ? Trophy : MoreHorizontal);
 
   return (
     <Link href={`/listing/${listing.id}`}>
@@ -99,9 +101,9 @@ function ListingCard({ listing }: { listing: PublicListing }) {
             <h3 className="font-semibold text-base leading-tight line-clamp-2" data-testid={`text-title-${listing.id}`}>
               {listing.title}
             </h3>
-            <div className={`flex-shrink-0 inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium ${categoryColors[listing.category]}`}>
+            <div className={`flex-shrink-0 inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium ${categoryColors[listing.category] || categoryColors.Sport}`}>
               <CategoryIcon className="w-3 h-3" />
-              {listing.category}
+              {t(listing.category)}
             </div>
           </div>
 
@@ -129,15 +131,13 @@ function ListingCard({ listing }: { listing: PublicListing }) {
                 {listing.recurrence && listing.recurrence !== "Einmalig" && (
                   <span className="inline-flex items-center gap-1 text-primary font-medium">
                     <Repeat className="w-3 h-3" />
-                    {listing.recurrence}
+                    {t(listing.recurrence)}
                   </span>
                 )}
               </>
             ) : (
               <span className="inline-flex items-center gap-1 text-primary font-medium">
-                <Calendar className="w-3 h-3" />
-                Flexibel
-              </span>
+                <Calendar className="w-3 h-3" />{t("Flexibel")}</span>
             )}
           </div>
 
@@ -147,7 +147,7 @@ function ListingCard({ listing }: { listing: PublicListing }) {
               {listing.name}, {listing.age}
             </span>
             <div className={`ml-auto inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${levelColors[listing.level]}`}>
-              {listing.level}
+              {t(listing.level)}
             </div>
           </div>
         </CardContent>
@@ -197,8 +197,8 @@ export default function Home() {
             <Link href="/create">
               <Button data-testid="button-create-listing">
                 <Plus className="w-4 h-4 mr-1" />
-                <span className="hidden sm:inline">Anzeige erstellen</span>
-                <span className="sm:hidden">Erstellen</span>
+                <span className="hidden sm:inline">{t("Anzeige erstellen")}</span>
+                <span className="sm:hidden">{t("Erstellen")}</span>
               </Button>
             </Link>
           </div>
@@ -212,7 +212,7 @@ export default function Home() {
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
               <Input
                 type="search"
-                placeholder="Aktivität suchen..."
+                placeholder={t("Aktivität suchen...")}
                 value={searchText}
                 onChange={(e) => setSearchText(e.target.value)}
                 className="pl-9"
@@ -224,6 +224,7 @@ export default function Home() {
               size="icon"
               onClick={() => setShowFilters(!showFilters)}
               className={showFilters ? "bg-accent" : ""}
+              aria-label={t("Filter anzeigen")}
               data-testid="button-toggle-filters"
             >
               <Filter className="w-4 h-4" />
@@ -236,37 +237,35 @@ export default function Home() {
                 <CityCombobox
                   value={cityFilter}
                   onChange={setCityFilter}
-                  placeholder="Stadt filtern..."
+                  placeholder={t("Stadt filtern...")}
                   data-testid="input-city-filter"
                 />
               </div>
               <Select value={categoryFilter} onValueChange={setCategoryFilter}>
                 <SelectTrigger className="sm:w-48" data-testid="select-category-filter">
-                  <SelectValue placeholder="Kategorie" />
+                  <SelectValue placeholder={t("Kategorie")} />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">Alle Kategorien</SelectItem>
+                  <SelectItem value="all">{t("Alle Kategorien")}</SelectItem>
                   {CATEGORIES.map((cat) => (
-                    <SelectItem key={cat} value={cat}>{cat}</SelectItem>
+                    <SelectItem key={cat} value={cat}>{t(cat)}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>
               <Select value={levelFilter} onValueChange={setLevelFilter}>
                 <SelectTrigger className="sm:w-48" data-testid="select-level-filter">
-                  <SelectValue placeholder="Level" />
+                  <SelectValue placeholder={t("Level")} />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">Alle Levels</SelectItem>
+                  <SelectItem value="all">{t("Alle Levels")}</SelectItem>
                   {LEVELS.map((lvl) => (
-                    <SelectItem key={lvl} value={lvl}>{lvl}</SelectItem>
+                    <SelectItem key={lvl} value={lvl}>{t(lvl)}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>
               {hasFilters && (
                 <Button variant="ghost" size="sm" onClick={clearFilters} className="self-start" data-testid="button-clear-filters">
-                  <X className="w-3 h-3 mr-1" />
-                  Filter zurücksetzen
-                </Button>
+                  <X className="w-3 h-3 mr-1" />{t("Filter zurücksetzen")}</Button>
               )}
             </div>
           )}
@@ -281,8 +280,7 @@ export default function Home() {
         ) : listings && listings.length > 0 ? (
           <>
             <p className="text-sm text-muted-foreground mb-4" data-testid="text-results-count">
-              {listings.length} {listings.length === 1 ? "Anzeige" : "Anzeigen"} gefunden
-            </p>
+              {listings.length} {listings.length === 1 ? t("Anzeige") : t("Anzeigen")} {t("gefunden")}</p>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
               {listings.map((listing) => (
                 <ListingCard key={listing.id} listing={listing} />
@@ -294,17 +292,15 @@ export default function Home() {
             <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center mb-4">
               <Search className="w-7 h-7 text-muted-foreground" />
             </div>
-            <h2 className="text-lg font-semibold mb-2" data-testid="text-no-results">Keine Anzeigen gefunden</h2>
+            <h2 className="text-lg font-semibold mb-2" data-testid="text-no-results">{t("Keine Anzeigen gefunden")}</h2>
             <p className="text-sm text-muted-foreground mb-6 max-w-sm">
               {hasFilters
-                ? "Versuche es mit anderen Filtern oder erstelle eine neue Anzeige."
-                : "Sei der Erste und erstelle eine Anzeige, um Leute für eine Aktivität zu finden!"}
+                ? t("Versuche es mit anderen Filtern oder erstelle eine neue Anzeige.")
+                : t("Sei der Erste und erstelle eine Anzeige, um Leute für eine Aktivität zu finden!")}
             </p>
             <Link href="/create">
               <Button data-testid="button-create-first">
-                <Plus className="w-4 h-4 mr-1" />
-                Anzeige erstellen
-              </Button>
+                <Plus className="w-4 h-4 mr-1" />{t("Anzeige erstellen")}</Button>
             </Link>
           </div>
         )}

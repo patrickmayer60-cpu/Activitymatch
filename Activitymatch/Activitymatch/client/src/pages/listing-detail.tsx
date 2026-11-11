@@ -1,3 +1,5 @@
+import { SPORT_CATEGORIES } from "@shared/categories";
+import { t, locale } from "@/lib/i18n";
 import { ContactForm } from "@/components/contact-form";
 import { useState } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
@@ -73,7 +75,7 @@ const genderLabels: Record<string, string> = {
 function formatDate(dateStr: string) {
   try {
     const date = new Date(dateStr);
-    return date.toLocaleDateString("de-DE", {
+    return date.toLocaleDateString(locale(), {
       weekday: "long",
       day: "2-digit",
       month: "long",
@@ -118,13 +120,13 @@ export default function ListingDetail() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/listings"] });
-      toast({ title: "Anzeige gelöscht", description: "Deine Anzeige wurde erfolgreich gelöscht." });
+      toast({ title: t("Anzeige gelöscht"), description: t("Deine Anzeige wurde erfolgreich gelöscht.") });
       navigate("/");
     },
     onError: (error: Error) => {
       toast({
         title: "Fehler",
-        description: "Ungültiger Secret-Key oder Anzeige nicht gefunden.",
+        description: t("Ungültiger Secret-Key oder Anzeige nicht gefunden."),
         variant: "destructive",
       });
     },
@@ -154,20 +156,18 @@ export default function ListingDetail() {
           </div>
         </header>
         <div className="max-w-3xl mx-auto px-3 sm:px-4 py-20 text-center">
-          <h2 className="text-xl font-semibold mb-2">Anzeige nicht gefunden</h2>
-          <p className="text-muted-foreground mb-6">Diese Anzeige existiert nicht oder wurde gelöscht.</p>
+          <h2 className="text-xl font-semibold mb-2">{t("Anzeige nicht gefunden")}</h2>
+          <p className="text-muted-foreground mb-6">{t("Diese Anzeige existiert nicht oder wurde gelöscht.")}</p>
           <Link href="/">
             <Button data-testid="button-back-home">
-              <ArrowLeft className="w-4 h-4 mr-1" />
-              Zurück zur Übersicht
-            </Button>
+              <ArrowLeft className="w-4 h-4 mr-1" />{t("Zurück zur Übersicht")}</Button>
           </Link>
         </div>
       </div>
     );
   }
 
-  const CategoryIcon = categoryIcons[listing.category] || MoreHorizontal;
+  const CategoryIcon = categoryIcons[listing.category] || (SPORT_CATEGORIES.includes(listing.category) ? Trophy : MoreHorizontal);
 
   return (
     <div className="min-h-screen bg-background">
@@ -180,7 +180,7 @@ export default function ListingDetail() {
             <Link href="/">
               <Button variant="outline" data-testid="button-back-overview">
                 <ArrowLeft className="w-4 h-4 mr-1" />
-                <span className="hidden sm:inline">Zurück</span>
+                <span className="hidden sm:inline">{t("Zurück")}</span>
               </Button>
             </Link>
           </div>
@@ -190,12 +190,12 @@ export default function ListingDetail() {
       <div className="max-w-3xl mx-auto px-3 sm:px-4 py-4 sm:py-6 space-y-5 sm:space-y-6">
         <div>
           <div className="flex flex-wrap items-center gap-2 mb-3">
-            <div className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium ${categoryColors[listing.category]}`}>
+            <div className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium ${categoryColors[listing.category] || categoryColors.Sport}`}>
               <CategoryIcon className="w-3.5 h-3.5" />
-              {listing.category}
+              {t(listing.category)}
             </div>
             <div className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium ${levelColors[listing.level]}`}>
-              {listing.level}
+              {t(listing.level)}
             </div>
           </div>
           <h2 className="text-2xl font-bold mb-2" data-testid="text-listing-title">{listing.title}</h2>
@@ -213,28 +213,25 @@ export default function ListingDetail() {
                 {listing.activityTime && (
                   <span className="inline-flex items-center gap-1">
                     <Clock className="w-4 h-4" />
-                    {listing.activityTime} Uhr
-                  </span>
+                    {listing.activityTime}{t("Uhr")}</span>
                 )}
                 {listing.recurrence && listing.recurrence !== "Einmalig" && (
                   <span className="inline-flex items-center gap-1 text-primary font-medium">
                     <Repeat className="w-4 h-4" />
-                    {listing.recurrence}
+                    {t(listing.recurrence)}
                   </span>
                 )}
               </>
             ) : (
               <span className="inline-flex items-center gap-1 text-primary font-medium">
-                <Calendar className="w-4 h-4" />
-                Flexibel
-              </span>
+                <Calendar className="w-4 h-4" />{t("Flexibel")}</span>
             )}
           </div>
         </div>
 
         <Card className="border border-border">
           <CardContent className="p-4 sm:p-5">
-            <h3 className="font-semibold mb-3">Beschreibung</h3>
+            <h3 className="font-semibold mb-3">{t("Beschreibung")}</h3>
             <p className="text-sm text-muted-foreground leading-relaxed whitespace-pre-wrap" data-testid="text-listing-description">
               {listing.description}
             </p>
@@ -244,7 +241,7 @@ export default function ListingDetail() {
         {listing.matchPreference && (
           <Card className="border border-border">
             <CardContent className="p-4 sm:p-5">
-              <h3 className="font-semibold mb-3">Wen suche ich?</h3>
+              <h3 className="font-semibold mb-3">{t("Wen suche ich?")}</h3>
               <p className="text-sm text-muted-foreground" data-testid="text-match-preference">{listing.matchPreference}</p>
             </CardContent>
           </Card>
@@ -252,27 +249,27 @@ export default function ListingDetail() {
 
         <Card className="border border-border">
           <CardContent className="p-4 sm:p-5">
-            <h3 className="font-semibold mb-3">Über die Person</h3>
+            <h3 className="font-semibold mb-3">{t("Über die Person")}</h3>
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
               <div className="flex items-center gap-2">
                 <User className="w-4 h-4 text-muted-foreground" />
                 <div>
-                  <p className="text-xs text-muted-foreground">Name</p>
+                  <p className="text-xs text-muted-foreground">{t("Name")}</p>
                   <p className="text-sm font-medium" data-testid="text-listing-name">{listing.name}</p>
                 </div>
               </div>
               <div className="flex items-center gap-2">
                 <Calendar className="w-4 h-4 text-muted-foreground" />
                 <div>
-                  <p className="text-xs text-muted-foreground">Alter</p>
-                  <p className="text-sm font-medium" data-testid="text-listing-age">{listing.age} Jahre</p>
+                  <p className="text-xs text-muted-foreground">{t("Alter")}</p>
+                  <p className="text-sm font-medium" data-testid="text-listing-age">{listing.age} {t("Jahre")}</p>
                 </div>
               </div>
               <div className="flex items-center gap-2">
                 <User className="w-4 h-4 text-muted-foreground" />
                 <div>
-                  <p className="text-xs text-muted-foreground">Geschlecht</p>
-                  <p className="text-sm font-medium" data-testid="text-listing-gender">{genderLabels[listing.gender] || listing.gender}</p>
+                  <p className="text-xs text-muted-foreground">{t("Geschlecht")}</p>
+                  <p className="text-sm font-medium" data-testid="text-listing-gender">{t(genderLabels[listing.gender] || listing.gender)}</p>
                 </div>
               </div>
             </div>
@@ -281,7 +278,7 @@ export default function ListingDetail() {
 
         <Card className="border border-border">
           <CardContent className="p-4 sm:p-5">
-            <h3 className="font-semibold mb-3">Kontakt</h3>
+            <h3 className="font-semibold mb-3">{t("Kontakt")}</h3>
             <div className="space-y-3">
               <ContactForm listingId={listing.id} canContact={listing.canContact} />
               {listing.contactNote && (
@@ -300,28 +297,22 @@ export default function ListingDetail() {
           <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
             <DialogTrigger asChild>
               <Button variant="outline" size="sm" className="text-destructive" data-testid="button-delete-listing">
-                <Trash2 className="w-3.5 h-3.5 mr-1" />
-                Anzeige löschen
-              </Button>
+                <Trash2 className="w-3.5 h-3.5 mr-1" />{t("Anzeige löschen")}</Button>
             </DialogTrigger>
             <DialogContent>
               <DialogHeader>
-                <DialogTitle>Anzeige löschen</DialogTitle>
-                <DialogDescription>
-                  Gib deinen Secret-Key ein, den du beim Erstellen der Anzeige erhalten hast.
-                </DialogDescription>
+                <DialogTitle>{t("Anzeige löschen")}</DialogTitle>
+                <DialogDescription>{t("Gib deinen Secret-Key ein, den du beim Erstellen der Anzeige erhalten hast.")}</DialogDescription>
               </DialogHeader>
               <div className="space-y-4">
                 <Input
-                  placeholder="Secret-Key eingeben"
+                  placeholder={t("Secret-Key eingeben")}
                   value={deleteKey}
                   onChange={(e) => setDeleteKey(e.target.value)}
                   data-testid="input-delete-key"
                 />
                 <div className="flex gap-2 justify-end">
-                  <Button variant="outline" onClick={() => setDeleteDialogOpen(false)} data-testid="button-cancel-delete">
-                    Abbrechen
-                  </Button>
+                  <Button variant="outline" onClick={() => setDeleteDialogOpen(false)} data-testid="button-cancel-delete">{t("Abbrechen")}</Button>
                   <Button
                     variant="destructive"
                     onClick={() => deleteMutation.mutate()}
@@ -331,7 +322,7 @@ export default function ListingDetail() {
                     {deleteMutation.isPending ? (
                       <Loader2 className="w-4 h-4 animate-spin" />
                     ) : (
-                      "Löschen"
+                      t("Löschen")
                     )}
                   </Button>
                 </div>

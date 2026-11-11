@@ -15,6 +15,7 @@ export async function migrateContactSchema() {
       secret_key text NOT NULL, created_at timestamp NOT NULL DEFAULT now()
     )`);
     await client.query(`ALTER TABLE listings
+      ADD COLUMN IF NOT EXISTS language text NOT NULL DEFAULT 'de',
       ADD COLUMN IF NOT EXISTS published boolean NOT NULL DEFAULT true,
       ADD COLUMN IF NOT EXISTS email_verified boolean NOT NULL DEFAULT false,
       ADD COLUMN IF NOT EXISTS contact_enabled boolean NOT NULL DEFAULT true,

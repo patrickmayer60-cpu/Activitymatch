@@ -1,9 +1,11 @@
+import { CATEGORIES } from "./categories";
 import { pgTable, text, varchar, integer, timestamp, serial, boolean, jsonb, date } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
 export const listings = pgTable("listings", {
   id: serial("id").primaryKey(),
+  language: text("language").default("de").notNull(),
   name: text("name").notNull(),
   age: integer("age").notNull(),
   gender: text("gender").notNull(),
@@ -36,11 +38,12 @@ export const insertListingSchema = createInsertSchema(listings).omit({
   secretKey: true,
   createdAt: true,
 }).extend({
+  language: z.enum(["de", "en"]).default("de"),
   name: z.string().min(2, "Name muss mindestens 2 Zeichen lang sein").max(100),
   age: z.number().min(13, "Mindestalter ist 13").max(120, "Maximales Alter ist 120"),
   gender: z.enum(["Männlich", "Weiblich", "Divers", "Keine Angabe"]),
   city: z.string().min(2, "Stadt muss mindestens 2 Zeichen lang sein").max(100),
-  category: z.enum(["Sport", "Gaming", "Musik", "Outdoor", "Fitness", "Sonstiges"]),
+  category: z.enum(CATEGORIES),
   title: z.string().min(5, "Titel muss mindestens 5 Zeichen lang sein").max(150),
   description: z.string().min(10, "Beschreibung muss mindestens 10 Zeichen lang sein").max(500, "Beschreibung darf maximal 500 Zeichen lang sein"),
   level: z.enum(["Anfänger", "Amateur", "Profi"]),
@@ -58,13 +61,14 @@ export const editListingSchema = z.object({
   title: z.string().trim().min(5).max(150),
   description: z.string().trim().min(10).max(500),
   city: z.string().trim().min(2).max(100),
-  category: z.enum(["Sport", "Gaming", "Musik", "Outdoor", "Fitness", "Sonstiges"]),
+  category: z.enum([...CATEGORIES, "Sport"]),
   level: z.enum(["Anfänger", "Amateur", "Profi"]),
   activityDate: z.string().regex(/^$|^\d{4}-\d{2}-\d{2}$/).nullable(),
   activityTime: z.string().regex(/^$|^([01]\d|2[0-3]):[0-5]\d$/).nullable(),
   contactEnabled: z.boolean(),
 });
 export const contactSchema = z.object({
+  language: z.enum(["de", "en"]).default("de"),
   name: z.string().trim().min(2).max(100),
   email: z.string().trim().email().max(254),
   message: z.string().trim().min(10).max(2000),

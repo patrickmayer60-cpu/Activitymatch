@@ -9,7 +9,7 @@
     "start": "NODE_ENV=production node dist/index.cjs",
     "check": "tsc",
     "db:push": "drizzle-kit push",
-    "test": "node --import tsx tests/contact.test.ts"
+    "test": "node --import tsx tests/contact.test.ts && node --import tsx tests/language.test.ts"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.10.0",

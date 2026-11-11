@@ -1,3 +1,6 @@
+import { useEffect } from "react";
+import { useLanguage } from "@/lib/i18n";
+import { LanguageSwitch } from "@/components/language-switch";
 import EmailAction from "@/pages/email-action";
 import ManageListing from "@/pages/manage-listing";
 import { Switch, Route } from "wouter";
@@ -26,10 +29,16 @@ function Router() {
 }
 
 function App() {
+  const language=useLanguage();
+  useEffect(()=>{
+    document.documentElement.lang=language;
+    document.title=language==="en"?"ActivityMatch – Find people for activities":"ActivityMatch – Finde Leute für gemeinsame Aktivitäten";
+  },[language]);
   return (
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
         <Toaster />
+        <LanguageSwitch />
         <Router />
       </TooltipProvider>
     </QueryClientProvider>

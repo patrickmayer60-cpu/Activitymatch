@@ -1,3 +1,5 @@
+import { getLanguage, t, locale } from "@/lib/i18n";
+import { CATEGORIES } from "@shared/categories";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -37,7 +39,7 @@ import {
 } from "lucide-react";
 import { BrandLogo } from "@/components/brand-logo";
 
-const CATEGORIES = ["Sport", "Gaming", "Musik", "Outdoor", "Fitness", "Sonstiges"] as const;
+
 const GENDERS = ["Männlich", "Weiblich", "Divers", "Keine Angabe"] as const;
 const LEVELS = ["Anfänger", "Amateur", "Profi"] as const;
 
@@ -54,7 +56,7 @@ export default function CreateListing() {
       age: undefined as unknown as number,
       gender: undefined as unknown as "Männlich",
       city: "",
-      category: undefined as unknown as "Sport",
+      category: undefined as unknown as InsertListing["category"],
       title: "",
       description: "",
       level: undefined as unknown as "Anfänger",
@@ -73,6 +75,7 @@ export default function CreateListing() {
     mutationFn: async (data: InsertListing) => {
       const res = await apiRequest("POST", "/api/listings", {
         ...data,
+        language: getLanguage(),
         website: (document.querySelector('input[name="website"]') as HTMLInputElement)?.value || "",
       });
       return res.json();
@@ -93,7 +96,7 @@ export default function CreateListing() {
     if (!flexibleDate && !data.activityDate) {
       form.setError("activityDate", {
         type: "manual",
-        message: "Datum ist erforderlich, wenn nicht 'Flexibel' gewählt",
+        message: t("Datum ist erforderlich, wenn nicht 'Flexibel' gewählt"),
       });
       return;
     }
@@ -113,7 +116,7 @@ export default function CreateListing() {
             <Link href="/">
               <Button variant="outline" data-testid="button-back-overview">
                 <ArrowLeft className="w-4 h-4 mr-1" />
-                <span className="hidden sm:inline">Zurück</span>
+                <span className="hidden sm:inline">{t("Zurück")}</span>
               </Button>
             </Link>
           </div>
@@ -122,8 +125,8 @@ export default function CreateListing() {
 
       <div className="max-w-3xl mx-auto px-3 sm:px-4 py-4 sm:py-6">
         <div className="mb-6">
-          <h2 className="text-2xl font-bold" data-testid="text-page-title">Anzeige erstellen</h2>
-          <p className="text-muted-foreground mt-1">Finde Leute für deine nächste Aktivität</p>
+          <h2 className="text-2xl font-bold" data-testid="text-page-title">{t("Anzeige erstellen")}</h2>
+          <p className="text-muted-foreground mt-1">{t("Finde Leute für deine nächste Aktivität")}</p>
         </div>
 
         <Form {...form}>
@@ -132,7 +135,7 @@ export default function CreateListing() {
 
             <Card className="border border-border">
               <CardHeader className="pb-4">
-                <CardTitle className="text-base">Aktivität</CardTitle>
+                <CardTitle className="text-base">{t("Aktivität")}</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
                 <FormField
@@ -140,9 +143,9 @@ export default function CreateListing() {
                   name="title"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Aktivitätstitel *</FormLabel>
+                      <FormLabel>{t("Aktivitätstitel *")}</FormLabel>
                       <FormControl>
-                        <Input placeholder='z.B. "Tennispartner gesucht"' {...field} data-testid="input-title" />
+                        <Input placeholder={t("z.B. \"Tennispartner gesucht\"")} {...field} data-testid="input-title" />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -155,16 +158,16 @@ export default function CreateListing() {
                     name="category"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Kategorie *</FormLabel>
+                        <FormLabel>{t("Kategorie *")}</FormLabel>
                         <Select onValueChange={field.onChange} value={field.value || ""}>
                           <FormControl>
                             <SelectTrigger data-testid="select-category">
-                              <SelectValue placeholder="Kategorie wählen" />
+                              <SelectValue placeholder={t("Kategorie wählen")} />
                             </SelectTrigger>
                           </FormControl>
                           <SelectContent>
                             {CATEGORIES.map((c) => (
-                              <SelectItem key={c} value={c}>{c}</SelectItem>
+                              <SelectItem key={c} value={c}>{t(c)}</SelectItem>
                             ))}
                           </SelectContent>
                         </Select>
@@ -177,16 +180,16 @@ export default function CreateListing() {
                     name="level"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Level *</FormLabel>
+                        <FormLabel>{t("Level *")}</FormLabel>
                         <Select onValueChange={field.onChange} value={field.value || ""}>
                           <FormControl>
                             <SelectTrigger data-testid="select-level">
-                              <SelectValue placeholder="Level wählen" />
+                              <SelectValue placeholder={t("Level wählen")} />
                             </SelectTrigger>
                           </FormControl>
                           <SelectContent>
                             {LEVELS.map((l) => (
-                              <SelectItem key={l} value={l}>{l}</SelectItem>
+                              <SelectItem key={l} value={l}>{t(l)}</SelectItem>
                             ))}
                           </SelectContent>
                         </Select>
@@ -201,10 +204,10 @@ export default function CreateListing() {
                   name="description"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Beschreibung *</FormLabel>
+                      <FormLabel>{t("Beschreibung *")}</FormLabel>
                       <FormControl>
                         <Textarea
-                          placeholder="Beschreibe deine Aktivität und was du suchst..."
+                          placeholder={t("Beschreibe deine Aktivität und was du suchst...")}
                           className="resize-none min-h-[100px]"
                           maxLength={500}
                           {...field}
@@ -242,9 +245,7 @@ export default function CreateListing() {
                       form.setValue("activityTime", "");
                       form.setValue("recurrence", "Einmalig");
                     }
-                  }}>
-                    Flexibel – kein festes Datum
-                  </label>
+                  }}>{t("Flexibel – kein festes Datum")}</label>
                 </div>
 
                 {!flexibleDate && (
@@ -254,7 +255,7 @@ export default function CreateListing() {
                       name="activityDate"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Wann? (Datum) *</FormLabel>
+                          <FormLabel>{t("Wann? (Datum) *")}</FormLabel>
                           <FormControl>
                             <Input type="date" {...field} value={field.value || ""} data-testid="input-date" />
                           </FormControl>
@@ -267,7 +268,7 @@ export default function CreateListing() {
                       name="activityTime"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Uhrzeit (optional)</FormLabel>
+                          <FormLabel>{t("Uhrzeit (optional)")}</FormLabel>
                           <FormControl>
                             <Input type="time" {...field} value={field.value || ""} data-testid="input-time" />
                           </FormControl>
@@ -280,17 +281,17 @@ export default function CreateListing() {
                       name="recurrence"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Wiederholung</FormLabel>
+                          <FormLabel>{t("Wiederholung")}</FormLabel>
                           <Select onValueChange={field.onChange} value={field.value || "Einmalig"}>
                             <FormControl>
                               <SelectTrigger data-testid="select-recurrence">
-                                <SelectValue placeholder="Einmalig" />
+                                <SelectValue placeholder={t("Einmalig")} />
                               </SelectTrigger>
                             </FormControl>
                             <SelectContent>
-                              <SelectItem value="Einmalig">Einmalig</SelectItem>
-                              <SelectItem value="Wöchentlich">Wöchentlich</SelectItem>
-                              <SelectItem value="Monatlich">Monatlich</SelectItem>
+                              <SelectItem value="Einmalig">{t("Einmalig")}</SelectItem>
+                              <SelectItem value="Wöchentlich">{t("Wöchentlich")}</SelectItem>
+                              <SelectItem value="Monatlich">{t("Monatlich")}</SelectItem>
                             </SelectContent>
                           </Select>
                           <FormMessage />
@@ -305,17 +306,17 @@ export default function CreateListing() {
                   name="matchPreference"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Wen suchst du? (optional)</FormLabel>
+                      <FormLabel>{t("Wen suchst du? (optional)")}</FormLabel>
                       <FormControl>
                         <Input
-                          placeholder='z.B. "Frauen, 20-30 Jahre, Anfänger"'
+                          placeholder={t("z.B. \"Frauen, 20-30 Jahre, Anfänger\"")}
                           maxLength={200}
                           {...field}
                           value={field.value || ""}
                           data-testid="input-match-preference"
                         />
                       </FormControl>
-                      <FormDescription>Beschreibe deine Wunsch-Partner (Geschlecht, Alter, Level)</FormDescription>
+                      <FormDescription>{t("Beschreibe deine Wunsch-Partner (Geschlecht, Alter, Level)")}</FormDescription>
                       <FormMessage />
                     </FormItem>
                   )}
@@ -325,7 +326,7 @@ export default function CreateListing() {
 
             <Card className="border border-border">
               <CardHeader className="pb-4">
-                <CardTitle className="text-base">Persönliche Angaben</CardTitle>
+                <CardTitle className="text-base">{t("Persönliche Angaben")}</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -334,9 +335,9 @@ export default function CreateListing() {
                     name="name"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Vorname *</FormLabel>
+                        <FormLabel>{t("Vorname *")}</FormLabel>
                         <FormControl>
-                          <Input placeholder="Dein Vorname" {...field} data-testid="input-name" />
+                          <Input placeholder={t("Dein Vorname")} {...field} data-testid="input-name" />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -347,11 +348,11 @@ export default function CreateListing() {
                     name="age"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Alter *</FormLabel>
+                        <FormLabel>{t("Alter *")}</FormLabel>
                         <FormControl>
                           <Input
                             type="number"
-                            placeholder="Dein Alter"
+                            placeholder={t("Dein Alter")}
                             {...field}
                             onChange={(e) => field.onChange(e.target.value ? parseInt(e.target.value) : undefined)}
                             value={field.value || ""}
@@ -370,16 +371,16 @@ export default function CreateListing() {
                     name="gender"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Geschlecht *</FormLabel>
+                        <FormLabel>{t("Geschlecht *")}</FormLabel>
                         <Select onValueChange={field.onChange} value={field.value || ""}>
                           <FormControl>
                             <SelectTrigger data-testid="select-gender">
-                              <SelectValue placeholder="Auswählen" />
+                              <SelectValue placeholder={t("Auswählen")} />
                             </SelectTrigger>
                           </FormControl>
                           <SelectContent>
                             {GENDERS.map((g) => (
-                              <SelectItem key={g} value={g}>{g}</SelectItem>
+                              <SelectItem key={g} value={g}>{t(g)}</SelectItem>
                             ))}
                           </SelectContent>
                         </Select>
@@ -392,11 +393,11 @@ export default function CreateListing() {
                     name="city"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Stadt *</FormLabel>
+                        <FormLabel>{t("Stadt *")}</FormLabel>
                         <CityCombobox
                           value={field.value}
                           onChange={field.onChange}
-                          placeholder="Stadt auswählen..."
+                          placeholder={t("Stadt auswählen...")}
                           data-testid="input-city"
                         />
                         <FormMessage />
@@ -409,8 +410,8 @@ export default function CreateListing() {
 
             <Card className="border border-border">
               <CardHeader className="pb-4">
-                <CardTitle className="text-base">Kontaktmöglichkeiten</CardTitle>
-                <FormDescription>Deine E-Mail-Adresse bleibt privat. Interessenten schreiben dir über ein Kontaktformular.</FormDescription>
+                <CardTitle className="text-base">{t("Kontaktmöglichkeiten")}</CardTitle>
+                <FormDescription>{t("Deine E-Mail-Adresse bleibt privat. Interessenten schreiben dir über ein Kontaktformular.")}</FormDescription>
               </CardHeader>
               <CardContent className="space-y-4">
                 <FormField
@@ -418,9 +419,9 @@ export default function CreateListing() {
                   name="contactEmail"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>E-Mail-Adresse (privat) *</FormLabel>
+                      <FormLabel>{t("E-Mail-Adresse (privat) *")}</FormLabel>
                       <FormControl>
-                        <Input type="email" placeholder="deine@email.de" {...field} value={field.value || ""} data-testid="input-email" />
+                        <Input type="email" placeholder={t("deine@email.de")} {...field} value={field.value || ""} data-testid="input-email" />
                       </FormControl>
                       {form.formState.errors.contactEmail?.message !== "Mindestens eine Kontaktmöglichkeit ist erforderlich" && (
                         <FormMessage />
@@ -433,17 +434,17 @@ export default function CreateListing() {
                   name="contactNote"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Kontakthinweis (optional)</FormLabel>
+                      <FormLabel>{t("Kontakthinweis (optional)")}</FormLabel>
                       <FormControl>
                         <Input
-                          placeholder='z.B. "Ich antworte meistens abends"'
+                          placeholder={t("z.B. \"Ich antworte meistens abends\"")}
                           maxLength={200}
                           {...field}
                           value={field.value || ""}
                           data-testid="input-contact-note"
                         />
                       </FormControl>
-                      <FormDescription>Öffentlich sichtbar. Bitte keine Telefonnummer oder E-Mail-Adresse eintragen.</FormDescription>
+                      <FormDescription>{t("Öffentlich sichtbar. Bitte keine Telefonnummer oder E-Mail-Adresse eintragen.")}</FormDescription>
                       <FormMessage />
                     </FormItem>
                   )}
@@ -464,9 +465,7 @@ export default function CreateListing() {
                     />
                   </FormControl>
                   <div className="space-y-1 leading-none">
-                    <FormLabel className="text-sm font-normal">
-                      Ich stimme zu, dass meine Anzeige und persönlichen Angaben öffentlich angezeigt werden. Meine E-Mail-Adresse bleibt privat und wird für Bestätigung und Kontaktanfragen verwendet. *
-                    </FormLabel>
+                    <FormLabel className="text-sm font-normal">{t("Ich stimme zu, dass meine Anzeige und persönlichen Angaben öffentlich angezeigt werden. Meine E-Mail-Adresse bleibt privat und wird für Bestätigung und Kontaktanfragen verwendet. *")}</FormLabel>
                     <FormMessage />
                   </div>
                 </FormItem>
@@ -482,11 +481,9 @@ export default function CreateListing() {
             >
               {createMutation.isPending ? (
                 <>
-                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                  Wird erstellt...
-                </>
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />{t("Wird erstellt...")}</>
               ) : (
-                "Bestätigungslink anfordern"
+                t("Bestätigungslink anfordern")
               )}
             </Button>
           </form>
@@ -496,10 +493,10 @@ export default function CreateListing() {
       <Dialog open={!!confirmationMessage} onOpenChange={(open) => { if (!open) navigate("/"); }}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Bitte prüfe dein E-Mail-Postfach</DialogTitle>
-            <DialogDescription>{confirmationMessage} Bitte prüfe auch den Spamordner. In der E-Mail findest du außerdem deinen privaten Verwaltungslink.</DialogDescription>
+            <DialogTitle>{t("Bitte prüfe dein E-Mail-Postfach")}</DialogTitle>
+            <DialogDescription>{t(confirmationMessage)} {t("Bitte prüfe auch den Spamordner. In der E-Mail findest du außerdem deinen privaten Verwaltungslink.")}</DialogDescription>
           </DialogHeader>
-          <Button onClick={() => navigate("/")}>Zur Übersicht</Button>
+          <Button onClick={() => navigate("/")}>{t("Zur Übersicht")}</Button>
         </DialogContent>
       </Dialog>
     </div>

@@ -1,3 +1,4 @@
+import { t, locale } from "@/lib/i18n";
 import { useState, useMemo, useRef, useEffect } from "react";
 import { Check, ChevronsUpDown, MapPin } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -77,7 +78,7 @@ export function CityCombobox({ value, onChange, placeholder = "Stadt auswählen.
               {selectedEntry ? `${selectedEntry.plz} ${selectedEntry.city}` : value}
             </span>
           ) : (
-            <span className="text-muted-foreground">{placeholder}</span>
+            <span className="text-muted-foreground">{t(placeholder)}</span>
           )}
           <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
         </Button>
@@ -85,18 +86,16 @@ export function CityCombobox({ value, onChange, placeholder = "Stadt auswählen.
       <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
         <Command shouldFilter={false}>
           <CommandInput
-            placeholder="PLZ oder Stadt eingeben..."
+            placeholder={t("PLZ oder Stadt eingeben...")}
             value={search}
             onValueChange={setSearch}
             data-testid={props["data-testid"] ? `${props["data-testid"]}-search` : undefined}
           />
           <CommandList>
             {search.length < 1 ? (
-              <div className="py-6 text-center text-sm text-muted-foreground">
-                Tippe mindestens 1 Zeichen ein...
-              </div>
+              <div className="py-6 text-center text-sm text-muted-foreground">{t("Tippe mindestens 1 Zeichen ein...")}</div>
             ) : filtered.length === 0 ? (
-              <CommandEmpty>Keine Stadt gefunden.</CommandEmpty>
+              <CommandEmpty>{t("Keine Stadt gefunden.")}</CommandEmpty>
             ) : (
               <CommandGroup>
                 {filtered.map((entry) => (
